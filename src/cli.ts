@@ -138,7 +138,7 @@ process.on('unhandledRejection', handler);
     types: argv.t ? (argv.t as string).split(',') as ModuleType[] : ['prod', 'optional'],
     mode: argv.p ? 'parallel' : (argv.s ? 'sequential' : undefined),
     debug: argv.b as boolean,
-    prebuildTagPrefix: (argv.prebuildTagPrefix as string) || 'v',
+    prebuildTagPrefix: (argv.prebuildTagPrefix !== undefined) ? (argv.prebuildTagPrefix as string) : 'v',
     forceABI: argv.forceAbi as number,
     useElectronClang: !!argv.useElectronClang,
     disablePreGypCopy: !!argv.disablePreGypCopy,
