@@ -3,6 +3,7 @@ import * as detectLibc from 'detect-libc';
 import * as fs from 'fs-extra';
 import * as NodeGyp from 'node-gyp';
 import * as path from 'path';
+import { fromElectronVersion as napiVersionFromElectronVersion } from 'node-api-version';
 import { cacheModuleState } from './cache';
 import { promisify } from 'util';
 import { readPackageJson } from './read-package-json';
@@ -103,6 +104,47 @@ export class ModuleRebuilder {
     }
 
     return args;
+  }
+
+  async getSupportedNapiVersions(): Promise<number[] | undefined> {
+    const binary = (await this.packageJSONFieldWithDefault(
+      'binary',
+      {}
+    )) as Record<string, number[]>;
+
+    if ('napi_versions' in binary) {
+      return binary.napi_versions;
+    }
+
+    return undefined;
+  }
+
+  async getNapiVersion(): Promise<number | undefined> {
+    const moduleNapiVersions = await this.getSupportedNapiVersions();
+
+    if (!moduleNapiVersions) {
+      // This is not a Node-API module
+      return undefined;
+    }
+
+    const electronNapiVersion = napiVersionFromElectronVersion(this.rebuilder.electronVersion);
+    
+    if (!electronNapiVersion) {
+      throw new Error(`Native module '${this.moduleName}' requires Node-API but Electron v${this.rebuilder.electronVersion} does not support Node-API`);
+    }
+
+    // Filter out Node-API versions that are too high
+    const filteredVersions = moduleNapiVersions.filter((v) => v <= electronNapiVersion);
+    
+    if (filteredVersions.length === 0) {
+      throw new Error(`Native module '${this.moduleName}' supports Node-API versions ${moduleNapiVersions} but Electron v${this.rebuilder.electronVersion} only supports Node-API v${electronNapiVersion}`)
+    }
+
+    if (filteredVersions.length === 1) {
+      return filteredVersions[0];
+    }
+
+    return Math.max(...filteredVersions);
   }
 
   async buildNodeGypArgsFromBinaryField(): Promise<string[]> {
@@ -297,6 +339,17 @@ export class ModuleRebuilder {
     const shimExt = process.env.ELECTRON_REBUILD_TESTS ? 'ts' : 'js';
     const executable = process.env.ELECTRON_REBUILD_TESTS ? path.resolve(__dirname, '..', 'node_modules', '.bin', 'ts-node') : process.execPath;
 
+    const napiVersion = await this.getNapiVersion();
+    const args = napiVersion
+      ? [
+        '--runtime=napi',
+        `--target=${napiVersion}`,
+      ]
+      : [
+        '--runtime=electron',
+        `--target=${this.rebuilder.electronVersion}`,
+      ];
+
     await spawn(
       executable,
       [
@@ -304,9 +357,8 @@ export class ModuleRebuilder {
         prebuildInstallPath,
         `--arch=${this.rebuilder.arch}`,
         `--platform=${process.platform}`,
-        '--runtime=electron',
-        `--target=${this.rebuilder.electronVersion}`,
-        `--tag-prefix=${this.rebuilder.prebuildTagPrefix}`
+        `--tag-prefix=${this.rebuilder.prebuildTagPrefix}`,
+        ...args,
       ],
       {
         cwd: this.modulePath,
