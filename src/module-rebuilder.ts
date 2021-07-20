@@ -88,9 +88,7 @@ export class ModuleRebuilder {
       '--build-from-source'
     ];
 
-    if (process.env.DEBUG) {
-      args.push('--verbose');
-    }
+    args.push(`--loglevel=${debug.enabled('electron-rebuild') ? 'verbose' : 'silent'}`)
 
     if (this.rebuilder.debug) {
       args.push('--debug');
