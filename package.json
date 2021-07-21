@@ -62,7 +62,7 @@
     "@types/node": "^16.0.1",
     "@types/node-abi": "^2.10.0",
     "@types/tar": "^4.0.3",
-    "@types/yargs": "^16.0.0",
+    "@types/yargs": "^17.0.2",
     "@typescript-eslint/eslint-plugin": "^4.0.1",
     "@typescript-eslint/parser": "^4.0.1",
     "chai": "^4.2.0",
