@@ -69,7 +69,7 @@
     "chai-as-promised": "^7.1.1",
     "codecov": "^3.7.2",
     "cross-env": "^7.0.2",
-    "electron": "^12.0.2",
+    "electron": "^13.1.7",
     "eslint": "^7.7.0",
     "eslint-plugin-mocha": "^9.0.0",
     "mocha": "^9.0.1",
