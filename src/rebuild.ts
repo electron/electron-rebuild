@@ -308,7 +308,12 @@ export class Rebuilder {
       }
       this.realModulePaths.add(realPath);
 
-      if (this.prodDeps[`${prefix}${modulePath}`] && (!this.onlyModules || this.onlyModules.includes(modulePath))) {
+      if (
+        this.prodDeps[`${prefix}${modulePath}`] &&
+        (!this.onlyModules ||
+          this.onlyModules.includes(modulePath) ||
+          this.onlyModules.includes(`${prefix}${modulePath}`))
+      ) {
         this.rebuilds.push(() => this.rebuildModuleAt(realPath));
       }
 

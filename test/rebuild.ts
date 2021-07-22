@@ -178,6 +178,34 @@ describe('rebuilder', () => {
       expect(electronModuleChecksum).to.not.equal(nodeModuleChecksum);
     });
 
+    it('should rebuild only specified modules with prefixes', async () => {
+      const rebuilder = rebuild({
+        buildPath: testModulePath,
+        electronVersion: '5.0.13',
+        arch: process.arch,
+        onlyModules: ['@nlv8/signun'],
+        force: true
+      });
+      let built = 0;
+      rebuilder.lifecycle.on('module-done', () => built++);
+      await rebuilder;
+      expect(built).to.equal(1);
+    });
+
+    it('should rebuild only specified modules missing prefixes', async () => {
+      const rebuilder = rebuild({
+        buildPath: testModulePath,
+        electronVersion: '5.0.13',
+        arch: process.arch,
+        onlyModules: ['signun'],
+        force: true
+      });
+      let built = 0;
+      rebuilder.lifecycle.on('module-done', () => built++);
+      await rebuilder;
+      expect(built).to.equal(1);
+    });
+
     it('should rebuild multiple specified modules via --only option', async () => {
       const rebuilder = rebuild({
         buildPath: testModulePath,
